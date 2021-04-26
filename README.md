@@ -158,6 +158,14 @@ Toggle au click:
 Vue directive (si showMobileMenu est true alors la class is-active): 
     - v-bind:class="{'is-active': showMobileMenu}"
 
+Creuser methods vs computed.
+
+String vs variable props :
+```
+initialItem="item" VS :initialItem="item" VS :initialItem="'item'"
+```
+
+@ est l'équivalent de v-on
 ### Exemple d'un script component
 
 ```

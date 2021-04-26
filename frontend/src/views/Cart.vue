@@ -19,13 +19,21 @@
                         <CartItem 
                             v-for="item in cart.items"
                             v-bind:key="item.product.id"
-                            v-bind:initialItem="item"
+                            :initialItem="item"
+                            v-on:removeFromCart="removeFromCart"
                         />
                     </tbody>
                 </table>
 
                 <p v-else>You don't have any products in your cart</p>
             </div> 
+
+            <div class="column is-12 box">
+                <h2 class="subtitle">Summary</h2>
+                <strong>${{ cartTotalPrice.toFixed(2) }}</strong>, {{ cartTotalLength }} items
+                <hr>
+                <router-link to="/cart/checkout" class="button is-dark"> Proceed to checkout </router-link>
+            </div>
         </div>
     </div>
 </template>
@@ -33,6 +41,7 @@
 <script>
 // import axios from 'axios';
 import CartItem from '@/components/CartItem.vue';
+
 
 export default {
     name: 'Cart',
@@ -45,6 +54,26 @@ export default {
                 items: []
             }
         }
+    },
+    mounted() {
+        this.cart = this.$store.state.cart;
+    },
+    methods: {
+        removeFromCart(item) {
+            this.cart.items = this.cart.items.filter(i => i.product.id !== item.product.id)
+        }
+    },
+    computed: {
+        cartTotalLength() {
+            return this.cart.items.reduce((acc, curVal) => {
+                return acc += curVal.quantity
+            }, 0)
+        },
+        cartTotalPrice() {
+            return this.cart.items.reduce((acc, curVal) => {
+                return acc += curVal.product.price * curVal.quantity
+            }, 0)
+        },
     }
 }
 </script>
