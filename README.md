@@ -220,3 +220,14 @@ export default {
 }
 </script>
 ```
+
+# Un peu de Stripe ?
+
+Dans settings.py ajouter la clé secrète:
+> STRIPE_SECRET_KEY = ""
+
+Puis relancer serveur comme c'est un chgt de config.
+
+> > python3 manage.py startapp order
+
+Puis placer 'order' dans INSTALLED_APPS dans settings.py, relancer serveur.

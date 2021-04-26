@@ -56,13 +56,6 @@
                             <div class="field">
                                 <label>Last name*</label>
                                 <div class="control">
-                                    <input v-model="first_name" type="text" class="input">
-                                </div>
-                            </div>
-
-                            <div class="field">
-                                <label>Last name*</label>
-                                <div class="control">
                                     <input v-model="last_name" type="text" class="input">
                                 </div>
                             </div>
@@ -110,8 +103,8 @@
 
                         <hr>
 
-                        <div id="card-element" class="mb-5">
-                        </div>
+                        <div id="card-element" class="mb-5"></div>
+
                         <template v-if="cartTotalLength"> 
                             <hr>
                             <button class="button is-dark" @click="submitForm">Pay with stripe</button>
@@ -124,7 +117,7 @@
 </template>
 
 <script>
-// import axios from 'axios'
+import axios from 'axios'
 
 export default {
     name: 'Checkout',
@@ -146,9 +139,17 @@ export default {
         }
     },
     mounted() {
-        document.title = "Checkout | Meihua Shop"
+        document.title = "Checkout | Meihua Shop";
 
-        this.cart = this.$store.state.cart
+        this.cart = this.$store.state.cart;
+
+        if (this.cartTotalLength > 0) {
+            this.stripe = window.Stripe('pk_test_ftVbkuHoSMC1KHl9smQPxkxA001OQ5x1nd');
+            const elements = this.stripe.elements();
+
+            this.card = elements.create('card', { hidePostalCode: true });
+            this.card.mount('#card-element');
+        }
     },
     methods: {
         getItemTotal(item) {
@@ -160,6 +161,59 @@ export default {
                 this.errors.push('The first name field is missing')
             }
             // Faire un switch
+
+            if (!this.errors.length) {
+                this.$store.commit('setIsLoading', true);
+
+                this.stripe.createToken(this.card)
+                .then(result => {
+                    if (result.error){
+                        this.$store.commit('setIsLoading', false);
+                        this.errrors.push('Something went wrong with Stripe. Please try again');
+                        console.log(result.error.message);
+                    } else {
+                        console.log("On va créer stripeTokenHandler");
+                        this.stripeTokenHandler(result.token);
+                    }
+                })
+            }
+        },
+        async stripeTokenHandler(token) {
+            const items = [];
+            console.log("C'est handlé");
+            for (let i=0; i<this.cart.items.length;i++){
+                const item = this.cart.items[i];
+                const obj = {
+                    product: item.product.id,
+                    quantity: item.quantity,
+                    price: item.product.price * item.quantity
+                }
+                items.push(obj)
+            }
+
+            const data = {
+                'first_name': this.first_name,
+                'last_name': this.last_name,
+                'email': this.email,
+                'address': this.address,
+                'zipcode': this.zipcode,
+                'place': this.place,
+                'phone': this.phone, 
+                'items': items,
+                'stripe_token' : token.id
+            }
+
+            await axios.post('/api/v1/checkout/', data)
+            .then(res => {
+                console.log("Aller on push", res);
+                this.$store.commit('clearCart');
+                this.$router.push('/cart/success');
+            })
+            .catch(error => {
+                this.errors.push('Something went wrong. Please try again');
+                console.log(error);
+            });
+            this.$store.commit('setIsLoading', false);
         }
     },
     computed: {
