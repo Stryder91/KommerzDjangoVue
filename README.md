@@ -3,6 +3,7 @@
 # Back-end - Install Django and setup
 > python3 --version
 
+On crée l'environnement propre à notre projet (python, pip) et on l'active:
 > virtualenv env
 > source env/bin/activate
 
@@ -12,8 +13,9 @@ Donc après cela, pip ne va installer plus que dans cet environnement!
 - djoser pour tout ce qui est login, auth
 - pillow pour les images
 
-Pour créer un projet : 
+Pour créer un projet et le lancer: 
 > django-admin startproject my_projekt
+> python3 manage.py runserver
 
 Une fois dans le dossier/, on a manage.py pour gérer connexion à la BDD, tâches administratives etc...
 
@@ -30,15 +32,22 @@ Dans ce settings py:
 
 - dans MIDDLEWARE ajouter:
     'corsheaders.middleware.CorsMiddleware',
+    
+- ajouter pour le CORS:
+```
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+]
+```
 
 ## Pattern 
 
-Une fois le modèle créé:
+Une fois le modèle créé (avec python3 manage.py startapp product)
 Cheminement : models -> serializers -> views -> urls
 
 - models.py : On décrit le modèle sous forme de Class et d'attributs pour représenter la table et les champs SQL (types)
-- serializers.py : ??? sert à formater les data ?
-- views.py : C'est là qu'on va créer nos objets views, en les récupérant de la BDD par exemple avec .all()
+- serializers.py : sert à formater les data pour les rendre utilisable pour les views.
+- views.py : C'est là qu'on va créer nos objets views, en les récupérant de la BDD par exemple avec .all() et en utilisant les serializers
 - urls.py : On décrit la route sur laquelle on va taper. Puis appel des views ex : "views.LatestProductsList.as_view()),"
 - admin.py : Sert à register() des Entités dans le Back-Office
 
@@ -132,7 +141,19 @@ urlpatterns = [
     path('api/v1/',  include('djoser.urls.authtoken')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
-
+Exemple de serializer : 
+```
+class CategorySerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True)
+    class Meta:
+        model = Category
+        fields = (
+            "id",
+            "name",
+            "get_absolute_url",
+            "products"
+        )
+```
 ### BDD & Migrations
 > python3 manage.py makemigrations
 > python3 manage.py migrate
